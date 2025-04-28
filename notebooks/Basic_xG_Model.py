@@ -55,3 +55,61 @@ plt.ylim(0, 80)
 plt.gca().invert_xaxis()
 plt.savefig('../results/shot_locations.png')
 plt.show()
+
+# --- Create a football pitch plot ---
+
+def create_pitch(length=120, width=80, unity=1):
+    """
+    Creates a football pitch plot using matplotlib
+    """
+    fig, ax = plt.subplots(figsize=(length/unity, width/unity))
+    # Pitch Outline & Centre Line
+    plt.plot([0,0],[0,width], color="black")
+    plt.plot([0,length],[width,width], color="black")
+    plt.plot([length,length],[width,0], color="black")
+    plt.plot([length,0],[0,0], color="black")
+    plt.plot([length/2,length/2],[0,width], color="black")
+    
+    # Left Penalty Area
+    plt.plot([18,18],[62,18],color="black")
+    plt.plot([0,18],[62,62],color="black")
+    plt.plot([18,0],[18,18],color="black")
+    
+    # Right Penalty Area
+    plt.plot([length,length-18],[62,62],color="black")
+    plt.plot([length-18,length-18],[62,18],color="black")
+    plt.plot([length-18,length],[18,18],color="black")
+    
+    # Left 6-yard Box
+    plt.plot([0,6],[50,50],color="black")
+    plt.plot([6,6],[50,30],color="black")
+    plt.plot([6,0],[30,30],color="black")
+    
+    # Right 6-yard Box
+    plt.plot([length,length-6],[50,50],color="black")
+    plt.plot([length-6,length-6],[50,30],color="black")
+    plt.plot([length-6,length],[30,30],color="black")
+    
+    # Prepare Circles
+    centreCircle = plt.Circle((length/2,width/2),8.1,color="black",fill=False)
+    centreSpot = plt.Circle((length/2,width/2),0.71,color="black")
+    leftPenSpot = plt.Circle((12,40),0.71,color="black")
+    rightPenSpot = plt.Circle((length-12,40),0.71,color="black")
+    
+    # Draw Circles
+    ax.add_patch(centreCircle)
+    ax.add_patch(centreSpot)
+    ax.add_patch(leftPenSpot)
+    ax.add_patch(rightPenSpot)
+    
+    # Limit axes
+    plt.xlim(0, length)
+    plt.ylim(0, width)
+    
+    return fig, ax
+
+# --- Plot Shots on Football Pitch ---
+
+fig, ax = create_pitch()
+
+sns.scatter
