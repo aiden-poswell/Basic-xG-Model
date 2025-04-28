@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
 
 # --- Load the JSON Data ---
-with open('C:/Users/Cara-lee Schapiro/Desktop/Aiden Poswell/Github Football/Basic-xG-Model/data/7478.json') as f:   # Change 7478.json if you uploaded a different match
+with open('data/7478.json') as f:   # Change 7478.json if you uploaded a different match
     data = json.load(f) 
 
 # --- Extract Shot Events ---
