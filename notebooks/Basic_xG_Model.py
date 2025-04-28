@@ -8,8 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
 
 # --- Load the JSON Data ---
-with open('../data/7478.json') as f:   # Change 7478.json if you uploaded a different match
-    data = json.load(f)
+with open('C:/Users/Cara-lee Schapiro/Desktop/Aiden Poswell/Github Football/Basic-xG-Model/data/7478.json') as f:   # Change 7478.json if you uploaded a different match
+    data = json.load(f) 
 
 # --- Extract Shot Events ---
 shots = [event for event in data if event['type']['name'] == 'Shot']
@@ -53,7 +53,7 @@ plt.ylabel('Y Location')
 plt.xlim(0, 120)
 plt.ylim(0, 80)
 plt.gca().invert_xaxis()
-plt.savefig('../results/shot_locations.png')
+plt.savefig(r'../results/shot_locations.png')
 plt.show()
 
 # --- Create a football pitch plot ---
@@ -124,5 +124,5 @@ sns.scatterplot(
 plt.title('Shot Map: Goals vs Misses')
 plt.legend(title='Goal')
 plt.gca().invert_xaxis()
-plt.savefig('../results/shot_pitch_map.png')
+plt.savefig(r'../results/shot_pitch_map.png')
 plt.show()
