@@ -172,7 +172,7 @@ dy = 0.024
 
 for idx, row in shots_df.iterrows():
     text = f"{int(row['shot_id']):2}: {row['xG']:.2f} xG"
-    t = plt.gcf().text(
+    t = plt.gcf().text( 
         0.99, 
         start_y - idx * dy,
         text,
@@ -184,7 +184,7 @@ for idx, row in shots_df.iterrows():
     if row['is_goal'] == 1:
         t.set_weight('bold')
 
-# --- Custom Legend ---
+# -- Custom Legend -- 
 legend_elements = [
     mpatches.Patch(facecolor='green', edgecolor='black', label='Goal'),
     mpatches.Patch(facecolor='red', edgecolor='black', label='Miss')
