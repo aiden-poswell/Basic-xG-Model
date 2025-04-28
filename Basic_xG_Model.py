@@ -53,7 +53,7 @@ plt.ylabel('Y Location')
 plt.xlim(0, 120)
 plt.ylim(0, 80)
 plt.gca().invert_xaxis()
-plt.savefig(r'../results/shot_locations.png')
+plt.savefig('results/shot_locations.png')
 plt.show()
 
 # --- Create a football pitch plot ---
@@ -124,5 +124,5 @@ sns.scatterplot(
 plt.title('Shot Map: Goals vs Misses')
 plt.legend(title='Goal')
 plt.gca().invert_xaxis()
-plt.savefig(r'../results/shot_pitch_map.png')
+plt.savefig('results/shot_pitch_map.png')
 plt.show()
