@@ -112,4 +112,17 @@ def create_pitch(length=120, width=80, unity=1):
 
 fig, ax = create_pitch()
 
-sns.scatter
+sns.scatterplot(
+    x='location_x', 
+    y='location_y', 
+    hue='is_goal', 
+    data=shots_df, 
+    palette='coolwarm', 
+    ax=ax
+)
+
+plt.title('Shot Map: Goals vs Misses')
+plt.legend(title='Goal')
+plt.gca().invert_xaxis()
+plt.savefig('../results/shot_pitch_map.png')
+plt.show()
