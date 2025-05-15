@@ -1,0 +1,146 @@
+# --- Import Libraries ---
+import os
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.patches as mpatches
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score
+
+# --- Load All JSON Event Files ---
+events_folder = os.path.join(os.path.dirname(__file__), "..", "data")
+events_folder = os.path.abspath(events_folder)
+all_shots = []
+
+for filename in os.listdir(events_folder):
+    if filename.endswith(".json"):
+        with open(os.path.join(events_folder, filename), "r", encoding="utf-8") as f:
+            data = json.load(f)
+            shots = [event for event in data if event['type']['name'] == 'Shot']
+            all_shots.extend(shots)
+
+# --- Convert to DataFrame ---
+shots_df = pd.json_normalize(all_shots)
+
+# --- Feature Engineering ---
+shots_df['location_x'] = shots_df['location'].apply(lambda x: x[0])
+shots_df['location_y'] = shots_df['location'].apply(lambda x: x[1])
+shots_df['distance'] = ((120 - shots_df['location_x'])**2 + (40 - shots_df['location_y'])**2)**0.5
+shots_df['is_goal'] = shots_df['shot.outcome.name'].apply(lambda x: 1 if x == 'Goal' else 0)
+
+# --- Train Model on All Shots ---
+X_all = shots_df[['location_x', 'location_y', 'distance']]
+y_all = shots_df['is_goal']
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
+model = LogisticRegression()
+model.fit(X_train_all, y_train_all)
+print("Model Trained on", len(X_all), "shots")
+print("Accuracy:", accuracy_score(y_test_all, model.predict(X_test_all)))
+print("ROC AUC:", roc_auc_score(y_test_all, model.predict_proba(X_test_all)[:, 1]))
+
+# --- Now Load Specific Match for Visualisation ---
+match_path = os.path.join(events_folder, "7478.json")
+with open(match_path, "r", encoding="utf-8") as f:
+    match_data = json.load(f)
+match_shots = [event for event in match_data if event['type']['name'] == 'Shot']
+match_df = pd.json_normalize(match_shots)
+
+# --- Feature Engineering ---
+match_df['location_x'] = match_df['location'].apply(lambda x: x[0])
+match_df['location_y'] = match_df['location'].apply(lambda x: x[1])
+match_df['distance'] = ((120 - match_df['location_x'])**2 + (40 - match_df['location_y'])**2)**0.5
+match_df['is_goal'] = match_df['shot.outcome.name'].apply(lambda x: 1 if x == 'Goal' else 0)
+match_df['shot_id'] = range(1, len(match_df) + 1)
+
+# --- Assign Fake Teams ---
+mid_point = len(match_df) // 2
+match_df['team'] = ['Team A' if i < mid_point else 'Team B' for i in range(len(match_df))]
+
+# --- Predict xG for Match Shots ---
+X_match = match_df[['location_x', 'location_y', 'distance']]
+match_df['xG'] = model.predict_proba(X_match)[:, 1]
+
+# --- Prepare plotting coordinates ---
+match_df['plot_x'] = match_df.apply(lambda row: row['location_x'] if row['team'] == 'Team A' else 120 - row['location_x'], axis=1)
+match_df['plot_y'] = match_df.apply(lambda row: row['location_y'] if row['team'] == 'Team A' else 80 - row['location_y'], axis=1)
+
+# --- Calculate total xG and goals for each team ---
+team_a_xg = match_df[match_df['team'] == 'Team A']['xG'].sum()
+team_b_xg = match_df[match_df['team'] == 'Team B']['xG'].sum()
+team_a_goals = match_df[(match_df['team'] == 'Team A') & (match_df['is_goal'] == 1)].shape[0]
+team_b_goals = match_df[(match_df['team'] == 'Team B') & (match_df['is_goal'] == 1)].shape[0]
+
+# --- Create Pitch ---
+def create_pitch(length=120, width=80):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.plot([0,0],[0,width], color="black")
+    ax.plot([0,length],[width,width], color="black")
+    ax.plot([length,length],[width,0], color="black")
+    ax.plot([length,0],[0,0], color="black")
+    ax.plot([length/2,length/2],[0,width], color="black")
+    ax.plot([18,18],[62,18],color="black")
+    ax.plot([0,18],[62,62],color="black")
+    ax.plot([18,0],[18,18],color="black")
+    ax.plot([length,length-18],[62,62],color="black")
+    ax.plot([length-18,length-18],[62,18],color="black")
+    ax.plot([length-18,length],[18,18],color="black")
+    ax.plot([0,6],[50,50],color="black")
+    ax.plot([6,6],[50,30],color="black")
+    ax.plot([6,0],[30,30],color="black")
+    ax.plot([length,length-6],[50,50],color="black")
+    ax.plot([length-6,length-6],[50,30],color="black")
+    ax.plot([length-6,length],[30,30],color="black")
+    centreCircle = plt.Circle((length/2,width/2),8.1,color="black",fill=False)
+    centreSpot = plt.Circle((length/2,width/2),0.71,color="black")
+    leftPenSpot = plt.Circle((12,40),0.71,color="black")
+    rightPenSpot = plt.Circle((length-12,40),0.71,color="black")
+    ax.add_patch(centreCircle)
+    ax.add_patch(centreSpot)
+    ax.add_patch(leftPenSpot)
+    ax.add_patch(rightPenSpot)
+    ax.set_xlim(0, length)
+    ax.set_ylim(0, width)
+    ax.axis('off')
+    return fig, ax
+
+# --- Plot ---
+fig, ax = create_pitch()
+sns.scatterplot(
+    x='plot_x', 
+    y='plot_y', 
+    hue='is_goal', 
+    data=match_df, 
+    palette={0: 'red', 1: 'green'},
+    s=150,
+    edgecolor='black',
+    ax=ax,
+    legend=False
+)
+
+for idx, row in match_df.iterrows():
+    ax.text(row['plot_x'], row['plot_y'], str(row['shot_id']), color='white', fontsize=8, weight='bold', ha='center', va='center')
+
+plt.title('Shot Map with xG Values', fontsize=20)
+plt.gcf().text(0.5, 0.94, f"Team A xG: {team_a_xg:.2f}  |  Team B xG: {team_b_xg:.2f}", fontsize=12, ha='center')
+ax.text(110, 78, f"Team A {team_a_goals} - {team_b_goals} Team B", fontsize=12, ha='left', va='top')
+plt.gca().invert_xaxis()
+plt.gcf().text(0.99, 0.83, "Shot xG List", fontsize=10, ha='right', va='top', weight='bold')
+
+start_y = 0.81
+dy = 0.024
+for idx, row in match_df.iterrows():
+    text = f"{int(row['shot_id']):2}: {row['xG']:.2f} xG"
+    t = plt.gcf().text(0.99, start_y - idx * dy, text, fontsize=8, ha='right', va='top', fontfamily='monospace')
+    if row['is_goal'] == 1:
+        t.set_weight('bold')
+
+legend_elements = [
+    mpatches.Patch(facecolor='green', edgecolor='black', label='Goal'),
+    mpatches.Patch(facecolor='red', edgecolor='black', label='Miss')
+]
+plt.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.08), ncol=2, frameon=False, fontsize=10)
+
+fig.savefig(os.path.join(os.path.dirname(__file__), "..", "results", "shot_pitch_map.png"), dpi=300, bbox_inches='tight')
+plt.show()

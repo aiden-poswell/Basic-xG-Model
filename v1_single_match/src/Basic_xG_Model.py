@@ -1,4 +1,5 @@
 # --- Import Libraries ---
+import os
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,7 +10,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
 
 # --- Load the JSON Data ---
-with open('data/7478.json') as f:
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+json_path = os.path.join(base_dir, 'data', '7478.json')
+
+with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 # --- Extract Shot Events ---
@@ -199,5 +203,6 @@ plt.legend(
 )
 
 # --- Save and Show ---
-fig.savefig('results/shot_pitch_map.png', dpi=300, bbox_inches='tight')
+output_path = os.path.join(base_dir, 'results', 'shot_pitch_map.png')
+fig.savefig(output_path, dpi=300, bbox_inches='tight')
 plt.show()
